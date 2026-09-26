@@ -37,6 +37,12 @@ may not be `alias` or shadow another registered command.
 
 ## Install
 
+> **Install it as a bundle.** `dsh plugin add …` mounts the row from the
+> package's own patch layer, which is what the settings editor can write to. A
+> row added with `--patch` is an overlay: it disappears at the next start, and
+> the Plugins card cannot save into it — the editor refuses a write an overlay
+> would win.
+
 `dsh plugin add dsh-alias`, or add the package to your profile's bundle list.
 The bundled `cordis.patch.yml` inserts the `alias` row.
 
