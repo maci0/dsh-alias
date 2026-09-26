@@ -207,6 +207,28 @@ test('the page lists every alias and removes one through the settings path', asy
   assert.deepEqual(client.mutations, [[{ op: 'unset', path: ['aliases', 'gm'] }]])
 })
 
+test('editing a row loads it into the form and the same write updates it', async () => {
+  const client = createClient({ aliases: { gm: 'good morning' } })
+  client.apply()
+  let tree = client.render({ view: 'page' })
+
+  const edit = findAll(tree, 'button').find((button) => textOf(button) === 'edit')
+  assert.notEqual(edit, undefined)
+  edit.props.onClick()
+  tree = client.render({ view: 'page' })
+  assert.deepEqual(findAll(tree, 'input').map((input) => input.props.value), ['gm', 'good morning'])
+  // The primary control now says what the write does.
+  const primary = findAll(tree, 'button').find((button) => ['add', 'update'].includes(textOf(button)))
+  assert.equal(textOf(primary), 'update')
+
+  const text = findAll(tree, 'input')[1]
+  text.props.onChange({ target: { value: 'good evening' } })
+  tree = client.render({ view: 'page' })
+  findAll(tree, 'button').find((button) => textOf(button) === 'update').props.onClick()
+  await client.flush()
+  assert.deepEqual(client.mutations, [[{ op: 'set', path: ['aliases', 'gm'], value: 'good evening' }]])
+})
+
 test('the add row writes the normalized name and clears the drafts', async () => {
   const client = createClient()
   client.apply()

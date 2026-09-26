@@ -61,6 +61,8 @@ reply says it is session-only.
 
 ## Notes
 
+- The Plugins card's **Edit** control loads a row back into the form; the same
+  write adds and updates, and the button says which one it will do.
 - Aliases accept no attachments; the composer refuses a submission that carries
   any, rather than dropping them silently.
 - `/alias` with no verb lists the aliases; `/alias set` is a synonym for `add`.
