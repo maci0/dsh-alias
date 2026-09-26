@@ -1,0 +1,15 @@
+# Bundle layer: applied when a profile lists this bundle in dsh.profile.bundles
+# (dsh plugin add does that from dsh.bundle). That list is frozen at boot.
+# Do not also paste this row into the profile's cordis.patch.yml: insert does
+# not dedupe ids, two rows would register the plugin twice.
+#
+# `name` stays a bare package specifier: the browser half is served by the
+# client module system, which resolves the Loader entry's package, reads its
+# `dsh.client` manifest, and serves `exports["./client"]`.
+- insert:
+    - id: alias
+      name: 'dsh-alias'
+      config:
+        # name (without the slash) -> the text /<name> expands to. Edit them
+        # here, with /alias, or from the Plugins page's Alias card.
+        aliases: {}
