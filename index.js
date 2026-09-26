@@ -84,7 +84,11 @@ const USAGE = 'Usage: /alias add <name> <text> — creates /<name>; '
  * surfaces edit it live, and the `default({})` keeps the form present in a
  * deployment whose row states no aliases.
  *
- * @typedef {{ readonly aliases?: Record<string, string> | { get(): Record<string, string> } }} Config
+ * `apply` receives the schema-resolved row, so the field is a live reference
+ * rather than a value: read it with `.get()`, as the harness documents for
+ * every volatile Config field.
+ *
+ * @typedef {{ readonly aliases: import('@deepseek-ai/cordis').Volatile<Record<string, string>> }} Config
  */
 export const Config = Schema.object({
   aliases: Schema.dict(Schema.string()).default({}).volatile(),
@@ -183,9 +187,9 @@ export function preview(text) {
 /**
  * Mount the plugin.
  * @param {object} ctx - the host context.
- * @param {Config} [config] - optional row configuration.
+ * @param {Config} config - the row's resolved configuration.
  */
-export function apply(ctx, config = {}) {
+export function apply(ctx, config) {
   const warn = (message) => { console.warn(`[alias] ${message}`) }
   const message = (error) => (error instanceof Error ? error.message : String(error))
 
@@ -199,8 +203,7 @@ export function apply(ctx, config = {}) {
    * @returns {Record<string, string>} name to text, invalid entries dropped.
    */
   const configured = () => {
-    const value = config.aliases
-    const raw = value !== null && typeof value === 'object' && typeof value.get === 'function' ? value.get() : value
+    const raw = config.aliases.get()
     const aliases = {}
     if (raw === null || typeof raw !== 'object') return aliases
     for (const [aliasName, text] of Object.entries(raw)) {
