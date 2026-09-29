@@ -43,6 +43,7 @@
  * @module dsh-alias
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { randomUUID } from 'node:crypto'
 import Schema from '@deepseek-ai/schemastery'
 
@@ -67,6 +68,13 @@ const ALIAS_COMMAND = 'alias'
 
 /** How far one alias may expand into another before the call is refused. */
 export const MAX_DEPTH = 4
+
+/**
+ * Nested-expansion depth of the invocation chain currently running. Per async
+ * chain, not per plugin: concurrent invocations (another session, another
+ * plugin's nested command) must not count each other's nesting.
+ */
+const aliasDepth = new AsyncLocalStorage()
 
 /** Longest alias text echoed in a description line or a listing. */
 const PREVIEW_LIMIT = 72
@@ -246,8 +254,6 @@ export function apply(ctx, config) {
    * @type {Map<string, { text: string, dispose?: () => void }>}
    */
   const registered = new Map()
-  /** Current nested-expansion depth, guarding alias cycles. */
-  let depth = 0
 
   const entryId = () => {
     const id = ctx.fiber?.entry?.options?.id
@@ -257,6 +263,11 @@ export function apply(ctx, config) {
 
   /**
    * Run one alias command.
+   *
+   * The nested-expansion depth rides the async context of this call, never a
+   * shared variable: one counter for the whole plugin would count an expansion
+   * suspended elsewhere in the process as this call's own nesting and refuse a
+   * legitimate alias as a cycle.
    * @param {string} aliasName - the alias being invoked.
    * @param {object} invocation - the registry's command invocation.
    * @returns {Promise<object>} the command result the UI renders.
@@ -282,22 +293,23 @@ export function apply(ctx, config) {
         text: `Alias "/${aliasName}" stands for ${preview(line)}, which is not a command this session can run.`,
       }
     }
+    const depth = aliasDepth.getStore() ?? 0
     if (depth >= MAX_DEPTH) {
       return {
         kind: 'error',
         text: `Alias "/${aliasName}" expands more than ${MAX_DEPTH} levels deep; check the aliases for a cycle.`,
       }
     }
-    depth += 1
     try {
-      const execution = await commandScope.commands.execute(invocation.agent, line, [], invocation.signal)
+      const execution = await aliasDepth.run(
+        depth + 1,
+        () => commandScope.commands.execute(invocation.agent, line, [], invocation.signal),
+      )
       return execution === undefined
         ? { kind: 'error', text: `Alias "/${aliasName}" could not run ${preview(line)}.` }
         : execution.result
     } catch (error) {
       return { kind: 'error', text: message(error) }
-    } finally {
-      depth -= 1
     }
   }
 

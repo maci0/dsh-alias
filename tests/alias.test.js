@@ -291,6 +291,28 @@ test('invalid configured aliases are reported and skipped, not fatal', () => {
   assert.match(warnings[0], /ignoring alias "Bad Name"/)
 })
 
+test('concurrent invocations do not share the nested-expansion depth guard', async () => {
+  // Regression: the depth counter was one variable for the whole plugin
+  // instance. A nested expansion suspended inside an async target command left
+  // it non-zero, and the very next /alias invocation in the process was
+  // refused as a cycle before it expanded anything.
+  const { state, agent } = mount({
+    aliases: { deep: '/d1', d1: '/d2', d2: '/d3', d3: '/slow', solo: '/slow' },
+    commands: ['slow'],
+  })
+  let pending = []
+  state.registered.get('slow').handler = () => new Promise((resolve) => { pending.push(resolve) })
+
+  const deep = run(state, agent, '/deep')
+  const solo = run(state, agent, '/solo')
+  await new Promise((resolve) => { setImmediate(resolve) }) // let both chains reach the suspended command
+  assert.equal(pending.length, 2, 'both invocations reached the target command')
+  for (const resolve of pending.splice(0)) resolve({ kind: 'success' })
+
+  assert.equal((await solo).kind, 'success', 'a second alias expands while the first is suspended')
+  assert.equal((await deep).kind, 'success')
+})
+
 test('a volatile update re-registers exactly what moved', async () => {
   const { state } = mount({ aliases: { gm: 'good morning' } })
   const original = state.registered.get('gm')
