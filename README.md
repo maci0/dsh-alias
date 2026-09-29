@@ -6,7 +6,7 @@ the Plugins page.
 ```
 /alias add gm summarize the repository in five bullets
 /alias add rev /perf-review {args}
-/alias add ship /cordis-review && /perf-review
+/alias add ship /cordis-review
 /alias list
 /alias remove gm
 ```
