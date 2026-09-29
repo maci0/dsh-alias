@@ -1,6 +1,6 @@
 {
   "name": "dsh-alias",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "index.js",
@@ -29,7 +29,7 @@
       ]
     },
     "compatibility": {
-      "dsh": ">=0.1.0-rc.8 <0.2.0"
+      "dsh": ">=0.2.0-rc.2 <0.3.0"
     }
   },
   "files": [
