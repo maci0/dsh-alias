@@ -1,19 +1,19 @@
 /**
- * dsh-alias — user-defined slash commands, as a DeepSeek Harness plugin.
+ * dsh-alias: user-defined slash commands, as a DeepSeek Harness plugin.
  *
  * `/alias add <name> <text>` registers `/<name>`, `/alias remove <name>` drops
  * it, `/alias list` prints them; a bare `/alias` lists. The same aliases are
  * editable from the Plugins page, where this package's browser half renders the
  * row's configuration card (`lib/client.js`).
  *
- * One settings field carries the state — the `aliases` dictionary of the
- * plugin's own row in the profile patch:
+ * One settings field carries the state: the `aliases` dictionary of the
+ * plugin's own row in the profile patch.
  *
  * ```yaml
  * - id: alias
  *   name: 'dsh-alias'
  *   config:
- *     aliases: { gm: good morning — summarize the repo }
+ *     aliases: { gm: good morning, summarize the repo }
  * ```
  *
  * The field is `volatile()`, so a write from either surface updates the live
@@ -80,7 +80,7 @@ const aliasDepth = new AsyncLocalStorage()
 const PREVIEW_LIMIT = 72
 
 /** Usage line shared by every rejected `/alias` form. */
-const USAGE = 'Usage: /alias add <name> <text> — creates /<name>; '
+const USAGE = 'Usage: /alias add <name> <text> (creates /<name>); '
   + '/alias remove <name>; /alias list. A name is lowercase letters, digits, `_` or `-`. '
   + 'Text may use {args} for whatever you type after the alias.'
 
@@ -162,8 +162,8 @@ function deepFreeze(value) {
 /**
  * Build the follow-up prompt one alias expands to.
  *
- * Mirrors `createUserMessage` from `@deepseek-ai/dsh-llm/message` — a frozen,
- * freshly identified plain object — instead of importing the harness package:
+ * Mirrors `createUserMessage` from `@deepseek-ai/dsh-llm/message` (a frozen,
+ * freshly identified plain object) instead of importing the harness package:
  * this plugin then carries no runtime dependency beyond its Config schema, and
  * the suite runs against these sources without the harness installed. The
  * source is deliberately not `user`, so the terse-talk deactivation watchers
