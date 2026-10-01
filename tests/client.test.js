@@ -40,22 +40,25 @@ function createReact() {
   }
 }
 
-let loads = 0
-
 /**
- * Load `lib/client.js` through the module loader and return its exports. The
- * file registers itself on `window.__ModuleLoader__`, exactly as the module
- * system evaluates it in the page; the query string gives every case a fresh
- * evaluation. `document` stays undefined, so the stylesheet guard holds.
+ * The definition `lib/client.js` registers. The file registers itself on
+ * `window.__ModuleLoader__`, exactly as the module system evaluates it in the
+ * page; it is imported once, and every case runs its factory (the per-mount
+ * unit) afresh. `document` stays undefined, so the stylesheet guard holds.
  */
-async function loadClient() {
-  let registration
-  globalThis.window = { __ModuleLoader__: { load: (spec) => { registration = spec } } }
+const registration = await (async () => {
+  let captured
+  globalThis.window = { __ModuleLoader__: { load: (spec) => { captured = spec } } }
   try {
-    await import(`../lib/client.js?case=${++loads}`)
+    await import('../lib/client.js')
   } finally {
     delete globalThis.window
   }
+  return captured
+})()
+
+/** Materialize the client module over a fresh React and return its exports. */
+function loadClient() {
   const React = createReact()
   const exports = registration.factory((id) => {
     assert.equal(id, 'react')
@@ -118,7 +121,7 @@ function textOf(node) {
 
 /** One fake browser context with its recorded surface and a mutable scope. */
 async function createClient(options = {}) {
-  const { exports, React } = await loadClient()
+  const { exports, React } = loadClient()
   const record = { mutations: [], labels: [] }
   const snapshot = {
     status: options.status ?? 'ready',
