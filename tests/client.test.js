@@ -269,6 +269,31 @@ test('the add row rejects a bad name or empty text without writing', async () =>
   assert.deepEqual(client.mutations, [])
 })
 
+test('a write the host refuses is reported, and the add drafts stay', async () => {
+  // Regression: `ConfigForm.mutate` resolves `false` on a refused write (an
+  // overlay row, a revision conflict) rather than throwing, so the card
+  // swallowed the refusal and the edit silently did nothing.
+  const client = createClient({ acceptWrites: false })
+  client.apply()
+  let tree = client.render({ view: 'page' })
+
+  findAll(tree, 'button').find((button) => textOf(button) === 'remove').props.onClick()
+  await client.flush()
+  assert.match(textOf(client.render({ view: 'page' })), /refused/)
+
+  tree = client.render({ view: 'page' })
+  const inputs = findAll(tree, 'input')
+  inputs[0].props.onChange({ target: { value: 'rev' } })
+  inputs[1].props.onChange({ target: { value: '/perf-review' } })
+  tree = client.render({ view: 'page' })
+  findAll(tree, 'button').find((button) => textOf(button) === 'add').props.onClick()
+  await client.flush()
+  tree = client.render({ view: 'page' })
+  assert.match(textOf(tree), /refused/)
+  assert.deepEqual(findAll(tree, 'input').map((input) => input.props.value), ['rev', '/perf-review'])
+  assert.equal(client.mutations.length, 2)
+})
+
 test('a read-only deployment disables the controls and says so', () => {
   const client = createClient({ writable: false })
   client.apply()
