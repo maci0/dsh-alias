@@ -315,6 +315,25 @@ test('a read-only deployment disables the controls and says so', async () => {
   assert.equal(findAll(tree, 'button').every((button) => button.props.disabled === true), true)
 })
 
+test('an alias write holds the form until its result settles', async () => {
+  const client = await createClient()
+  client.apply()
+  let tree = client.render({ view: 'page' })
+  const inputs = findAll(tree, 'input')
+  inputs[0].props.onChange({ target: { value: 'new' } })
+  inputs[1].props.onChange({ target: { value: 'hello' } })
+  tree = client.render({ view: 'page' })
+  findAll(tree, 'button').find(button => textOf(button) === 'add').props.onClick()
+  tree = client.render({ view: 'page' })
+  assert.ok(findAll(tree, 'input').every(input => input.props.disabled))
+  assert.ok(findAll(tree, 'button').every(button => button.props.disabled))
+  findAll(tree, 'button').find(button => textOf(button) === 'add').props.onClick()
+  findAll(tree, 'button').find(button => textOf(button) === 'remove').props.onClick()
+  await client.flush()
+  assert.equal(client.mutations.length, 1)
+  assert.ok(findAll(client.render({ view: 'page' }), 'input').every(input => !input.props.disabled))
+})
+
 test('the card version stays in lockstep with package.json', async () => {
   assert.match(SOURCE, new RegExp(`const VERSION = '${PACKAGE.version.replace(/\./gu, '\\.')}'`))
 })
