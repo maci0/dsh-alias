@@ -91,14 +91,17 @@ adds and updates, and the button says which one it will do.
 
 ## Development
 
-Plain JavaScript, no build step: `npm test` runs `node --test` over the host
+dsh loads plugins on Node `^22.19.0 || >=24.0.0`; development and tests run on
+bun.
+
+Plain JavaScript, no build step: `bun test` runs the suite over the host
 half (`index.js`) and the browser half (`lib/client.js`) against structural
 fakes of the harness surfaces they use, plus a composition test that mounts the
 plugin in a real `@deepseek-ai/cordis` context.
 
 ```sh
-npm ci
-npm test
+bun install --frozen-lockfile
+bun test
 ```
 
 For local development, `dsh plugin --profile <name> add <path-to-checkout>`.
