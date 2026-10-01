@@ -20,7 +20,7 @@
  * config reference in place, with no remount, and emits
  * `loader/volatile-update`; this half re-reads the dictionary there and
  * re-registers exactly the commands that changed. A deployment whose settings
- * document refuses the write still gets a working alias for the session, held
+ * document refuses the write still gets a working alias until dsh restarts, held
  * in a local overlay, and the reply says so.
  *
  * What `/<name>` does when invoked:
@@ -235,14 +235,14 @@ export function apply(ctx, config) {
   }
 
   /**
-   * Session-local aliases the settings document could not hold. They shadow the
+   * Runtime aliases the settings document could not hold. They shadow the
    * document until it carries the same value, so an alias added on a read-only
-   * deployment still works for this session.
+   * deployment still works in every session until dsh restarts.
    * @type {Map<string, string>}
    */
   const local = new Map()
 
-  /** @returns {Record<string, string>} the document's aliases overlaid by the session's. */
+  /** @returns {Record<string, string>} the document's aliases overlaid by the runtime's. */
   const effective = () => ({ ...configured(), ...Object.fromEntries(local) })
 
   /** The injected `commands` scope, once the service is mounted. */
@@ -379,7 +379,7 @@ export function apply(ctx, config) {
    */
   const addAlias = async (aliasName, text) => {
     const previous = effective()[aliasName]
-    // The session-local overlay lands first, so the alias works on this turn
+    // The runtime overlay lands first, so the alias works on this turn
     // even when the document refuses the write.
     local.set(aliasName, text)
     sync()
@@ -391,10 +391,10 @@ export function apply(ctx, config) {
     if (!await persist([{ op: 'set', path: ['aliases', aliasName], value: text }])) {
       return {
         kind: 'success',
-        text: `/${aliasName} is set for this session only: the settings document did not accept the write.`,
+        text: `/${aliasName} is set until dsh restarts: the settings document did not accept the write.`,
       }
     }
-    local.delete(aliasName) // the document is the source of truth again
+    if (local.get(aliasName) === text) local.delete(aliasName) // leave any newer edit intact
     return {
       kind: 'success',
       text: previous === undefined
@@ -418,14 +418,18 @@ export function apply(ctx, config) {
     if (Object.hasOwn(effective(), aliasName)) {
       return {
         kind: 'error',
-        text: `/${aliasName} comes from the profile's composition layer; remove it there.`,
+        text: local.has(aliasName)
+          ? `/${aliasName} changed while it was being removed; the newer alias remains.`
+          : persisted
+            ? `/${aliasName} comes from the profile's composition layer; remove it there.`
+            : `/${aliasName} could not be removed: the settings document did not accept the write.`,
       }
     }
     return {
       kind: 'success',
       text: persisted
         ? `Removed /${aliasName}.`
-        : `Removed /${aliasName} for this session only: the settings document did not accept the write.`,
+        : `Removed /${aliasName} until dsh restarts: the settings document did not accept the write.`,
     }
   }
 
@@ -456,7 +460,7 @@ export function apply(ctx, config) {
     return removeAlias(parsed.name)
   }
 
-  // The document is authoritative once it moves: a session-local alias the
+  // The document is authoritative once it moves: a runtime alias the
   // write did land is dropped, and everything is re-registered from scratch.
   ctx.on('loader/volatile-update', () => {
     for (const [aliasName, text] of [...local]) {

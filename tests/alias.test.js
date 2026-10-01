@@ -106,7 +106,7 @@ function mount(options = {}) {
   const { state, ctx, agent } = harness(options)
   warnings.length = 0
   apply(ctx, { aliases: { get: () => state.aliases } })
-  return { state, agent, warnings }
+  return { state, agent, warnings, ctx }
 }
 
 /** Invoke a registered command the way the registry would. */
@@ -248,11 +248,11 @@ test('/alias remove unregisters the command and clears the field', async () => {
   assert.equal(state.writes.length, 1)
 })
 
-test('a refused settings write still leaves the alias usable this session', async () => {
+test('a refused settings write still leaves the alias usable until restart', async () => {
   const { state, agent, warnings } = mount({ acceptWrites: false })
   const added = await run(state, agent, '/alias add gm good morning')
   assert.equal(added.kind, 'success')
-  assert.match(added.text, /session only/)
+  assert.match(added.text, /until dsh restarts/)
   assert.equal(state.registered.has('gm'), true)
   assert.equal(warnings.some(line => line.includes('settings write refused')), true)
 
@@ -278,6 +278,40 @@ test('an alias a later settings write adopts stops shadowing the document', asyn
   assert.equal(state.registered.has('gm'), true)
   await run(state, agent, '/gm again')
   assert.equal(state.follows[0].content[0].text, 'good morning again')
+})
+
+test('removing a saved alias reports the refused write rather than blaming the composition layer', async () => {
+  const { state, agent } = mount({ aliases: { gm: 'good morning' }, acceptWrites: false })
+  const result = await run(state, agent, '/alias remove gm')
+  assert.equal(result.kind, 'error')
+  assert.match(result.text, /settings document did not accept/)
+  assert.equal(state.registered.has('gm'), true)
+})
+
+test('an older successful add cannot erase a newer add whose settings write fails', async () => {
+  const { state, agent, ctx } = mount()
+  const settings = ctx.get('settings')
+  const mutate = settings.mutate.bind(settings)
+  let finishFirst, failSecond
+  const firstGate = new Promise(resolve => { finishFirst = resolve })
+  const secondGate = new Promise(resolve => { failSecond = resolve })
+  settings.mutate = async (ns, ops) => {
+    if (ops[0].value === 'first') {
+      await firstGate
+      return mutate(ns, ops)
+    }
+    await secondGate
+    throw new Error('second write refused')
+  }
+  const first = run(state, agent, '/alias add gm first')
+  const second = run(state, agent, '/alias add gm second')
+  finishFirst()
+  await first
+  failSecond()
+  assert.equal((await second).kind, 'success', 'the refused write keeps a usable local alias')
+  await run(state, agent, '/gm')
+  assert.equal(state.follows.at(-1).content[0].text, 'second')
+  assert.equal(state.aliases.gm, 'first', 'the document accepted only the first write')
 })
 
 test('invalid configured aliases are reported and skipped, not fatal', () => {

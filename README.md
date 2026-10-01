@@ -26,7 +26,7 @@ their own. The Plugins page gains an **Alias** card that edits the same set.
 > would win).
 
 ```sh
-dsh plugin --profile web add github:maci0/dsh-alias#v0.5.0
+dsh plugin --profile web add github:maci0/dsh-alias#v0.5.1
 ```
 
 Pin a release tag: a bare `github:` spec floats on `main`. To upgrade, run the
@@ -76,8 +76,8 @@ Aliases live in one settings field, the plugin's own row:
 The field is `volatile()`, so the Plugins page's **Alias** card, `/alias`, and
 the profile patch are three views of one document: a write from any of them
 lands on the running instance with no remount. A deployment whose settings
-document refuses writes still gets working aliases for the session, and the
-reply says it is session-only. The card reports a write the host refuses.
+document refuses writes still gets working aliases in every current session
+until dsh restarts, and the reply says so. The card reports a write the host refuses.
 
 The card's **Edit** control loads a row back into the form; the same write
 adds and updates, and the button says which one it will do.
