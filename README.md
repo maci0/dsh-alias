@@ -26,7 +26,7 @@ their own. The Plugins page gains an **Alias** card that edits the same set.
 > would win).
 
 ```sh
-dsh plugin --profile web add github:maci0/dsh-alias#v0.3.0
+dsh plugin --profile web add github:maci0/dsh-alias#v0.4.0
 ```
 
 Pin a release tag: a bare `github:` spec floats on `main`. To upgrade, run the
