@@ -1,7 +1,7 @@
 /**
  * Host half: parsing, expansion, the command wiring, and the settings writes.
  *
- * The fake host is structural on purpose — it declares only the slice of
+ * The fake host is structural on purpose: it declares only the slice of
  * `ctx` this plugin reaches, so the suite runs without the harness installed.
  */
 

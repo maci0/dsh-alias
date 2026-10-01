@@ -4,8 +4,8 @@
  * registration when its fiber disposes.
  *
  * The unit suite drives a plain-object fake, which cannot tell a service read
- * apart from a property read — a real context throws on the latter for a
- * service it does not provide — and cannot show whether a registration is
+ * apart from a property read (a real context throws on the latter for a
+ * service it does not provide) and cannot show whether a registration is
  * released. Both matter here: this plugin registers commands dynamically, and
  * the Web client reloads plugin rows on every profile edit.
  *
@@ -23,8 +23,8 @@ import * as Alias from '../index.js'
 /**
  * The smallest `ctx.commands` seam this plugin reaches: register and lookup.
  *
- * It is a real `Service`, so `this.ctx` is the *consumer's* context — the same
- * relationship the harness registry has — and a registration is released when
+ * It is a real `Service`, so `this.ctx` is the *consumer's* context (the same
+ * relationship the harness registry has), and a registration is released when
  * that context disposes. A plain object would keep the entries forever and make
  * the plugin look like it leaks them.
  */
