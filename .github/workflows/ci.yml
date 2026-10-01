@@ -28,4 +28,6 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm test
+      - run: npm run typecheck --if-present
+      - run: npm run build --if-present
+      - run: npm test --if-present
