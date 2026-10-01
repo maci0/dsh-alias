@@ -37,7 +37,7 @@
  * appended.
  *
  * This file is plain JavaScript on purpose, like `dsh-loop`: the plugin needs
- * no build step, no bundled runtime, and `node --test` runs the suite on the
+ * no build step, no bundled runtime, and `bun test` runs the suite on the
  * sources directly.
  *
  * @module dsh-alias
