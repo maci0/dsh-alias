@@ -40,13 +40,22 @@ function createReact() {
   }
 }
 
-/** Load `lib/client.js` through the module loader and return its exports. */
-function loadClient() {
+let loads = 0
+
+/**
+ * Load `lib/client.js` through the module loader and return its exports. The
+ * file registers itself on `window.__ModuleLoader__`, exactly as the module
+ * system evaluates it in the page; the query string gives every case a fresh
+ * evaluation. `document` stays undefined, so the stylesheet guard holds.
+ */
+async function loadClient() {
   let registration
-  const window = { __ModuleLoader__: { load: (spec) => { registration = spec } } }
-  // The file is a script, not a module: it registers itself, exactly as the
-  // module system evaluates it in the page.
-  new Function('window', SOURCE)(window)
+  globalThis.window = { __ModuleLoader__: { load: (spec) => { registration = spec } } }
+  try {
+    await import(`../lib/client.js?case=${++loads}`)
+  } finally {
+    delete globalThis.window
+  }
   const React = createReact()
   const exports = registration.factory((id) => {
     assert.equal(id, 'react')
@@ -108,8 +117,8 @@ function textOf(node) {
 }
 
 /** One fake browser context with its recorded surface and a mutable scope. */
-function createClient(options = {}) {
-  const { exports, React } = loadClient()
+async function createClient(options = {}) {
+  const { exports, React } = await loadClient()
   const record = { mutations: [], labels: [] }
   const snapshot = {
     status: options.status ?? 'ready',
@@ -157,8 +166,8 @@ function createClient(options = {}) {
   return record
 }
 
-test('apply binds the alias namespace and registers the row card', () => {
-  const client = createClient()
+test('apply binds the alias namespace and registers the row card', async () => {
+  const client = await createClient()
   client.apply()
 
   assert.deepEqual(client.exports.inject, ['slots', 'configForms', 'locale'])
@@ -171,25 +180,25 @@ test('apply binds the alias namespace and registers the row card', () => {
   assert.equal(client.slot.locale, 'alias')
 })
 
-test('an unserved namespace renders nothing at all', () => {
-  const client = createClient({ status: 'unavailable' })
+test('an unserved namespace renders nothing at all', async () => {
+  const client = await createClient({ status: 'unavailable' })
   client.apply()
   assert.equal(client.render({ view: 'page' }), null)
   assert.equal(client.render({ view: 'summary' }), null)
 })
 
-test('the summary view reports the alias count', () => {
-  const empty = createClient({ aliases: {} })
+test('the summary view reports the alias count', async () => {
+  const empty = await createClient({ aliases: {} })
   empty.apply()
   assert.equal(empty.render({ view: 'summary' }), 'summaryEmpty')
 
-  const two = createClient({ aliases: { gm: 'good morning', rev: '/perf-review' } })
+  const two = await createClient({ aliases: { gm: 'good morning', rev: '/perf-review' } })
   two.apply()
   assert.equal(two.render({ view: 'summary' }), 'summary:2')
 })
 
 test('the page lists every alias and removes one through the settings path', async () => {
-  const client = createClient({ aliases: { gm: 'good morning', rev: '/perf-review {args}' } })
+  const client = await createClient({ aliases: { gm: 'good morning', rev: '/perf-review {args}' } })
   client.apply()
   const tree = client.render({ view: 'page' })
 
@@ -208,7 +217,7 @@ test('the page lists every alias and removes one through the settings path', asy
 })
 
 test('editing a row loads it into the form and the same write updates it', async () => {
-  const client = createClient({ aliases: { gm: 'good morning' } })
+  const client = await createClient({ aliases: { gm: 'good morning' } })
   client.apply()
   let tree = client.render({ view: 'page' })
 
@@ -230,7 +239,7 @@ test('editing a row loads it into the form and the same write updates it', async
 })
 
 test('the add row writes the normalized name and clears the drafts', async () => {
-  const client = createClient()
+  const client = await createClient()
   client.apply()
   let tree = client.render({ view: 'page' })
 
@@ -250,7 +259,7 @@ test('the add row writes the normalized name and clears the drafts', async () =>
 })
 
 test('the add row rejects a bad name or empty text without writing', async () => {
-  const client = createClient()
+  const client = await createClient()
   client.apply()
 
   const interact = (name, text) => {
@@ -273,7 +282,7 @@ test('a write the host refuses is reported, and the add drafts stay', async () =
   // Regression: `ConfigForm.mutate` resolves `false` on a refused write (an
   // overlay row, a revision conflict) rather than throwing, so the card
   // swallowed the refusal and the edit silently did nothing.
-  const client = createClient({ acceptWrites: false })
+  const client = await createClient({ acceptWrites: false })
   client.apply()
   let tree = client.render({ view: 'page' })
 
@@ -294,8 +303,8 @@ test('a write the host refuses is reported, and the add drafts stay', async () =
   assert.equal(client.mutations.length, 2)
 })
 
-test('a read-only deployment disables the controls and says so', () => {
-  const client = createClient({ writable: false })
+test('a read-only deployment disables the controls and says so', async () => {
+  const client = await createClient({ writable: false })
   client.apply()
   const tree = client.render({ view: 'page' })
   assert.match(textOf(tree), /readOnly/)
@@ -303,6 +312,6 @@ test('a read-only deployment disables the controls and says so', () => {
   assert.equal(findAll(tree, 'button').every((button) => button.props.disabled === true), true)
 })
 
-test('the card version stays in lockstep with package.json', () => {
+test('the card version stays in lockstep with package.json', async () => {
   assert.match(SOURCE, new RegExp(`const VERSION = '${PACKAGE.version.replace(/\./gu, '\\.')}'`))
 })
