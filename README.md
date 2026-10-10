@@ -26,7 +26,7 @@ their own. The Plugins page gains an **Alias** card that edits the same set.
 > would win).
 
 ```sh
-dsh plugin --profile web add github:maci0/dsh-alias#v0.5.2
+dsh plugin --profile web add github:maci0/dsh-alias#v0.5.3
 ```
 
 Pin a release tag: a bare `github:` spec floats on `main`. To upgrade, run the
@@ -64,7 +64,7 @@ Aliases live in one settings field, the plugin's own row:
 
 ```yaml
 - id: alias
-  name: 'dsh-alias'
+  name: '@maci0/dsh-alias'
   config:
     aliases:
       gm: summarize the repository in five bullets

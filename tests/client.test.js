@@ -179,7 +179,7 @@ test('apply binds the alias namespace and registers the row card', async () => {
   assert.equal(typeof client.locale.dictionaries.en.summary, 'string')
   assert.equal(typeof client.locale.dictionaries.zh.summary, 'string')
   assert.equal(client.injected, 'plugins.row.config')
-  assert.equal(client.slot.key, 'dsh-alias#alias')
+  assert.equal(client.slot.key, '@maci0/dsh-alias#alias')
   assert.equal(client.slot.locale, 'alias')
 })
 

@@ -8,7 +8,7 @@
 # `dsh.client` manifest, and serves `exports["./client"]`.
 - insert:
     - id: alias
-      name: 'dsh-alias'
+      name: '@maci0/dsh-alias'
       config:
         # name (without the slash) -> the text /<name> expands to. Edit them
         # here, with /alias, or from the Plugins page's Alias card.
