@@ -11,7 +11,7 @@
  *
  * ```yaml
  * - id: alias
- *   name: 'dsh-alias'
+ *   name: '@maci0/dsh-alias'
  *   config:
  *     aliases: { gm: good morning, summarize the repo }
  * ```
