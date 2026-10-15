@@ -5,23 +5,23 @@
     "": {
       "name": "@maci0/dsh-alias",
       "dependencies": {
-        "@deepseek-ai/schemastery": "3.18.5-alpha.1",
+        "@deepseek-ai/schemastery": "3.18.5-alpha.2",
       },
       "devDependencies": {
-        "@deepseek-ai/cordis": "4.0.5-alpha.1",
-        "@deepseek-ai/cosmokit": "1.8.6-alpha.1",
+        "@deepseek-ai/cordis": "4.0.5-alpha.2",
+        "@deepseek-ai/cosmokit": "1.8.6-alpha.2",
       },
       "peerDependencies": {
-        "@deepseek-ai/cordis": "4.0.5-alpha.1",
+        "@deepseek-ai/cordis": "4.0.5-alpha.2",
       },
     },
   },
   "packages": {
-    "@deepseek-ai/cordis": ["@deepseek-ai/cordis@4.0.5-alpha.1", "", { "dependencies": { "@deepseek-ai/cosmokit": "~1.8.6-alpha.1", "@standard-schema/spec": "^1.1.0" }, "peerDependencies": { "@deepseek-ai/cordis-plugin-include": "~1.0.10-alpha.1", "@deepseek-ai/cordis-plugin-loader": "~1.0.6-alpha.1" }, "optionalPeers": ["@deepseek-ai/cordis-plugin-include", "@deepseek-ai/cordis-plugin-loader"], "bin": { "cordis": "bin.js" } }, "sha512-I0akiPAK9EEWO+GMAO0YGbn3/rzg/yopaxohBaG9JHM8dDzGaCZNp3mehjeC66IQL0AyTyDwvgv7v1aB+eMnKQ=="],
+    "@deepseek-ai/cordis": ["@deepseek-ai/cordis@4.0.5-alpha.2", "", { "dependencies": { "@deepseek-ai/cosmokit": "~1.8.6-alpha.2", "@standard-schema/spec": "^1.1.0" }, "peerDependencies": { "@deepseek-ai/cordis-plugin-include": "~1.0.10-alpha.2", "@deepseek-ai/cordis-plugin-loader": "~1.0.6-alpha.2" }, "optionalPeers": ["@deepseek-ai/cordis-plugin-include", "@deepseek-ai/cordis-plugin-loader"], "bin": { "cordis": "bin.js" } }, "sha512-rd5Qp6PNrMk+0saWVMLUaVv08s/WBwf2TXM84ST6tppFqlHS0Yl9l/NwPrA4oVOuS/1BKCYOGlZ6zJRj+JG6IQ=="],
 
-    "@deepseek-ai/cosmokit": ["@deepseek-ai/cosmokit@1.8.6-alpha.1", "", {}, "sha512-qtuYVBRu7VrD1jLHvaM5sSShtBVgff/0R5vx57fsHUeeobvvv5TmtnTrs0+h4H263kF3ie25VO70Ija8R1eaow=="],
+    "@deepseek-ai/cosmokit": ["@deepseek-ai/cosmokit@1.8.6-alpha.2", "", {}, "sha512-FcxdMUal80CeFURh3lPYsw9TPDMVSGpovWnA3JtTGrBG15XFli4k38z1Egso1lgvifKpIW4Hx42X6UTelLEOAA=="],
 
-    "@deepseek-ai/schemastery": ["@deepseek-ai/schemastery@3.18.5-alpha.1", "", { "dependencies": { "@deepseek-ai/cosmokit": "~1.8.6-alpha.1", "@standard-schema/spec": "^1.1.0" } }, "sha512-HojoBv1wMQn6N8nDgTgWbc/f4EFAlg/ZsIYN2AChnEDoFOmcWd3+MDzhozNffmywywzV7pcouHRR4x37YZfcjA=="],
+    "@deepseek-ai/schemastery": ["@deepseek-ai/schemastery@3.18.5-alpha.2", "", { "dependencies": { "@deepseek-ai/cosmokit": "~1.8.6-alpha.2", "@standard-schema/spec": "^1.1.0" } }, "sha512-W+2TSjdeKOEKqaii9BNpw7ev2Yf8C+J74i/BE/VBx56O7BX0zxV2zQKwRY4ADLTXD5O69iJ+/Skm91/ES7iMgw=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
   }
