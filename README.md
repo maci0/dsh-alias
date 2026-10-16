@@ -26,12 +26,11 @@ their own. The Plugins page gains an **Alias** card that edits the same set.
 > would win).
 
 ```sh
-dsh plugin --profile web add github:maci0/dsh-alias#v0.5.4
+dsh plugin --profile web add --save-exact @maci0/dsh-alias@0.6.0
 ```
 
-Pin a release tag: a bare `github:` spec floats on `main`. To upgrade, run the
-same command with the newer tag, then restart `dsh web` (bundle layers compose
-at boot).
+Pin an exact npm version. To upgrade, run the same command with the newer
+version, then restart `dsh web` (bundle layers compose at boot).
 
 The bundled `cordis.patch.yml` inserts the `alias` row.
 
