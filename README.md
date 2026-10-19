@@ -19,6 +19,8 @@ their own. The Plugins page gains an **Alias** card that edits the same set.
 
 ## Install
 
+Requires DeepSeek Harness `>=0.2.1-rc.2 <0.3.0`. Restart DSH and refresh the browser after upgrading.
+
 > **Install it as a bundle.** `dsh plugin add …` mounts the row from the
 > package's own patch layer, which is what the settings editor can write to. A
 > row added with `--patch` is an overlay: it disappears at the next start, and
@@ -26,7 +28,7 @@ their own. The Plugins page gains an **Alias** card that edits the same set.
 > would win).
 
 ```sh
-dsh plugin --profile web add --save-exact @maci0/dsh-alias@0.6.0
+dsh plugin --profile web add --save-exact @maci0/dsh-alias@0.7.0
 ```
 
 Pin an exact npm version. To upgrade, run the same command with the newer
