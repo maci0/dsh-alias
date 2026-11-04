@@ -65,7 +65,7 @@ test('the plugin mounts into a real Cordis context and releases its commands', a
   // A settings write moves the live reference and the loader emits this; the
   // listener re-reads the row on a real context without reaching a service it
   // did not inject.
-  const live = fiber.config.aliases
+  const live = fiber.effectiveConfig.aliases
   updateVolatile(live, createVolatile({ gm: 'good morning', rev: '/alias list' }))
   ctx.emit('loader/volatile-update')
   assert.deepEqual([...registered.keys()].sort(), ['alias', 'gm', 'rev'], 'the new alias is registered')
