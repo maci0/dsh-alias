@@ -122,7 +122,7 @@ function textOf(node) {
 /** One fake browser context with its recorded surface and a mutable scope. */
 async function createClient(options = {}) {
   const { exports, React } = loadClient()
-  const record = { mutations: [], labels: [] }
+  const record = { mutations: [], labels: [], disposers: [] }
   const snapshot = {
     status: options.status ?? 'ready',
     value: { aliases: { ...(options.aliases ?? { gm: 'good morning' }) } },
@@ -155,7 +155,12 @@ async function createClient(options = {}) {
       },
       register: (ns, dictionaries) => { record.locale = { ns, dictionaries } },
     },
-    effect: (callback, label) => { record.effects = [...(record.effects ?? []), label]; return callback() },
+    effect: (callback, label) => {
+      record.effects = [...(record.effects ?? []), label]
+      const dispose = callback()
+      if (typeof dispose === 'function') record.disposers.push(dispose)
+      return dispose
+    },
     configForms: { get: (ns) => { record.namespace = ns; return scope } },
     slots: {
       inject: (name, callback) => { record.injected = name; callback() },
@@ -164,6 +169,7 @@ async function createClient(options = {}) {
   }
   record.exports = exports
   record.apply = () => exports.apply(ctx)
+  record.dispose = () => { for (const dispose of record.disposers.splice(0).reverse()) dispose() }
   record.render = (props) => mountComponent(record.component, props, React)
   record.flush = () => new Promise((resolve) => { setImmediate(resolve) })
   return record
@@ -332,6 +338,43 @@ test('an alias write holds the form until its result settles', async () => {
   await client.flush()
   assert.equal(client.mutations.length, 1)
   assert.ok(findAll(client.render({ view: 'page' }), 'input').every(input => !input.props.disabled))
+})
+
+/** A `document` with just the head a stylesheet is appended to. */
+function createDocument() {
+  const head = { children: [], append: (node) => { head.children.push(node) } }
+  return {
+    head,
+    createElement: (tagName) => {
+      const attributes = new Map()
+      const node = {
+        tagName: tagName.toUpperCase(),
+        textContent: '',
+        setAttribute: (name, value) => { attributes.set(name, String(value)) },
+        getAttribute: (name) => attributes.get(name) ?? null,
+        remove: () => { head.children = head.children.filter((child) => child !== node) },
+      }
+      return node
+    },
+  }
+}
+
+test('apply installs one tagged stylesheet and dispose removes it', async () => {
+  const client = await createClient()
+  const document = createDocument()
+  const styles = () => document.head.children.filter((node) =>
+    node.tagName === 'STYLE' && node.getAttribute('data-plugin') === PACKAGE.name)
+  globalThis.document = document
+  try {
+    client.apply()
+  } finally {
+    delete globalThis.document
+  }
+
+  assert.equal(styles().length, 1)
+  assert.match(styles()[0].textContent, /\.da-/u)
+  client.dispose()
+  assert.equal(styles().length, 0)
 })
 
 test('the card version stays in lockstep with package.json', async () => {
