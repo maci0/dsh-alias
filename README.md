@@ -1,7 +1,7 @@
 # dsh-alias
 
-Define your own slash commands in DeepSeek Harness, from the composer or from
-the Plugins page.
+Define your own slash commands in DeepSeek Harness, from the composer, the
+**Aliases** panel in the sidebar, or the Alias card on the Plugins page.
 
 ## What you get
 
@@ -15,7 +15,9 @@ the Plugins page.
 
 After that, `/gm`, `/rev src/app.ts`, and `/ship` are ordinary commands: they
 show up in the composer's command directory and run without a model turn of
-their own. The Plugins page gains an **Alias** card that edits the same set.
+their own. Three surfaces edit the same set: the sidebar's **Aliases** panel,
+the **Alias** card inside the plugin's row on the Plugins page, and `/alias`
+itself.
 
 ## Install
 
@@ -28,13 +30,11 @@ Requires DeepSeek Harness `>=0.2.2-rc.4 <0.3.0`. Restart DSH and refresh the bro
 > would win).
 
 ```sh
-dsh plugin --profile web add --save-exact @maci0/dsh-alias@0.7.4
+dsh plugin --profile web add --save-exact @maci0/dsh-alias@0.7.5
 ```
 
 Pin an exact npm version. To upgrade, run the same command with the newer
 version, then restart `dsh web` (bundle layers compose at boot).
-
-The bundled `cordis.patch.yml` inserts the `alias` row.
 
 ## Commands
 
@@ -74,8 +74,8 @@ Aliases live in one settings field, the plugin's own row:
 
 ## How it works
 
-The field is `volatile()`, so the Plugins page's **Alias** card, `/alias`, and
-the profile patch are three views of one document: a write from any of them
+The field is `volatile()`, so the sidebar's **Aliases** page, the Plugins page's **Alias** card, `/alias`, and
+the profile patch are four views of one document: a write from any of them
 lands on the running instance with no remount. A deployment whose settings
 document refuses writes still gets working aliases in every current session
 until dsh restarts, and the reply says so. The card reports a write the host refuses.

@@ -163,11 +163,21 @@ async function createClient(options = {}) {
     },
     configForms: { get: (ns) => { record.namespace = ns; return scope } },
     slots: {
-      inject: (name, callback) => { record.injected = name; callback() },
-      register: (spec, component) => { record.slot = spec; record.component = component },
+      inject: (name, callback) => {
+        record.injected = [...(record.injected ?? []), name]
+        callback()
+      },
+      register: (spec, component) => {
+        record.registrations = [...(record.registrations ?? []), { spec, component }]
+        if (spec.name === 'plugins.row.config') {
+          record.slot = spec
+          record.component = component
+        }
+      },
     },
   }
   record.exports = exports
+  record.React = React
   record.apply = () => exports.apply(ctx)
   record.dispose = () => { for (const dispose of record.disposers.splice(0).reverse()) dispose() }
   record.render = (props) => mountComponent(record.component, props, React)
@@ -184,9 +194,32 @@ test('apply binds the alias namespace and registers the row card', async () => {
   assert.equal(client.locale.ns, 'alias')
   assert.equal(typeof client.locale.dictionaries.en.summary, 'string')
   assert.equal(typeof client.locale.dictionaries.zh.summary, 'string')
-  assert.equal(client.injected, 'plugins.row.config')
+  assert.deepEqual(client.injected, ['plugins.row.config', 'main', 'sidebar.panellist'])
   assert.equal(client.slot.key, '@maci0/dsh-alias#alias')
   assert.equal(client.slot.locale, 'alias')
+})
+
+test('apply also mounts the global page the sidebar entry opens', async () => {
+  const client = await createClient()
+  client.apply()
+
+  const main = client.registrations.find((entry) => entry.spec.name === 'main')
+  assert.notEqual(main, undefined)
+  assert.equal(main.spec.key, 'alias')
+  assert.equal(main.spec.locale, 'alias')
+
+  const entry = client.registrations.find((record) => record.spec.name === 'sidebar.panellist')
+  assert.notEqual(entry, undefined)
+  assert.equal(entry.spec.id, 'alias')
+  assert.equal(entry.spec.order, 20)
+  assert.equal(entry.spec.label(), 'panel')
+
+  const page = mountComponent(main.component, {}, client.React)
+  assert.equal(textOf(findAll(page, 'h1')[0]), 'panel')
+  assert.match(textOf(page), /panelSubtitle/)
+  assert.equal(findAll(page, 'li').length, 1)
+
+  assert.equal(typeof entry.component({ size: 16 }).type, 'string')
 })
 
 test('an unserved namespace renders nothing at all', async () => {
