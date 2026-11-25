@@ -30,7 +30,7 @@ Requires DeepSeek Harness `>=0.2.2-rc.4 <0.3.0`. Restart DSH and refresh the bro
 > would win).
 
 ```sh
-dsh plugin --profile web add --save-exact @maci0/dsh-alias@0.7.7
+dsh plugin --profile web add --save-exact @maci0/dsh-alias@0.8.0
 ```
 
 Pin an exact npm version. To upgrade, run the same command with the newer
@@ -81,7 +81,9 @@ document refuses writes still gets working aliases in every current session
 until dsh restarts, and the reply says so. The card reports a write the host refuses.
 
 The card's **Edit** control loads a row back into the form; the same write
-adds and updates, and the button says which one it will do.
+adds and updates, and the button says which one it will do. A long alias
+text renders clamped to three lines with a **Show all** control, so one big
+alias does not push the rest of the list out of reach.
 
 ## Limits
 

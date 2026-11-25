@@ -20,20 +20,22 @@ const PACKAGE = JSON.parse(readFileSync(new URL('../package.json', import.meta.u
  * scope directly, since nothing re-renders asynchronously in a test.
  */
 function createReact() {
-  const hooks = { cells: [], index: 0 }
+  // Cells are keyed by component and hook position, so a row's own state does
+  // not collide with the card's.
+  const hooks = { cells: {}, index: 0, current: '' }
   return {
     hooks,
     createElement(type, props, ...children) {
       return { type, props: { ...(props ?? {}), children: children.flat(Infinity) } }
     },
     useState(initial) {
-      const cell = hooks.index++
-      if (!Object.hasOwn(hooks.cells, cell)) {
-        hooks.cells[cell] = typeof initial === 'function' ? initial() : initial
+      const key = `${hooks.current}:${hooks.index++}`
+      if (!Object.hasOwn(hooks.cells, key)) {
+        hooks.cells[key] = typeof initial === 'function' ? initial() : initial
       }
       return [
-        hooks.cells[cell],
-        (next) => { hooks.cells[cell] = typeof next === 'function' ? next(hooks.cells[cell]) : next },
+        hooks.cells[key],
+        (next) => { hooks.cells[key] = typeof next === 'function' ? next(hooks.cells[key]) : next },
       ]
     },
     useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot() },
@@ -80,10 +82,13 @@ function renderNode(node, React) {
   if (typeof node === 'string' || typeof node === 'number') return node
   if (Array.isArray(node)) return node.map((child) => renderNode(child, React))
   if (typeof node.type === 'function') {
-    const saved = React.hooks.index
+    const savedIndex = React.hooks.index
+    const savedCurrent = React.hooks.current
     React.hooks.index = 0
+    React.hooks.current = node.type.name
     const rendered = node.type(node.props)
-    React.hooks.index = saved
+    React.hooks.index = savedIndex
+    React.hooks.current = savedCurrent
     return renderNode(rendered, React)
   }
   return { type: node.type, props: { ...node.props, children: renderNode(node.props.children ?? [], React) } }
@@ -92,6 +97,7 @@ function renderNode(node, React) {
 /** Render a component function with its own hook frame. */
 function mountComponent(component, props, React) {
   React.hooks.index = 0
+  React.hooks.current = component.name
   return renderNode(component(props), React)
 }
 
@@ -412,4 +418,44 @@ test('apply installs one tagged stylesheet and dispose removes it', async () => 
 
 test('the card version stays in lockstep with package.json', async () => {
   assert.match(SOURCE, new RegExp(`const VERSION = '${PACKAGE.version.replace(/\./gu, '\\.')}'`))
+})
+
+test('every configured alias is listed, however many there are', async () => {
+  const aliases = { gm: 'good morning', rev: '/perf-review {args}', ship: '/cordis-review', rel: 'merge and push' }
+  const client = await createClient({ aliases })
+  client.apply()
+  const tree = client.render({ view: 'page' })
+
+  const items = findAll(tree, 'li')
+  assert.equal(items.length, 4)
+  assert.deepEqual(
+    items.map((item) => textOf(findAll(item, 'span')[0])),
+    ['/gm', '/rel', '/rev', '/ship'],
+  )
+})
+
+test('a long alias starts clamped and expands on demand', async () => {
+  const text = 'x'.repeat(200)
+  const client = await createClient({ aliases: { long: text } })
+  client.apply()
+
+  let tree = client.render({ view: 'page' })
+  const clamped = findAll(tree, 'span').find((span) => textOf(span) === text)
+  assert.equal(clamped.props.className, 'da-text da-clamped')
+  const toggle = findAll(tree, 'button').find((button) => textOf(button) === 'showMore')
+  assert.notEqual(toggle, undefined)
+  assert.equal(toggle.props['aria-expanded'], false)
+
+  toggle.props.onClick()
+  tree = client.render({ view: 'page' })
+  const expanded = findAll(tree, 'span').find((span) => textOf(span) === text)
+  assert.equal(expanded.props.className, 'da-text')
+  assert.equal(findAll(tree, 'button').find((button) => textOf(button) === 'showLess').props['aria-expanded'], true)
+})
+
+test('a short alias has no collapse control', async () => {
+  const client = await createClient({ aliases: { gm: 'good morning' } })
+  client.apply()
+  const tree = client.render({ view: 'page' })
+  assert.equal(findAll(tree, 'button').some((button) => ['showMore', 'showLess'].includes(textOf(button))), false)
 })

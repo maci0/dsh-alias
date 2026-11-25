@@ -1,6 +1,6 @@
 {
   "name": "@maci0/dsh-alias",
-  "version": "0.7.7",
+  "version": "0.8.0",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
